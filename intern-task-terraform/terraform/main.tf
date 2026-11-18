@@ -97,8 +97,30 @@ locals {
   user_data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
     admin_username      = var.admin_username
     ssh_authorized_keys = jsonencode(compact([var.ssh_public_key]))
+    ssh_allowed_cidr    = var.ssh_allowed_cidr
     app_port            = local.app_port
     dockerfile_b64      = local.dockerfile_b64
     app_source_b64      = local.app_source_b64
   })
+}
+resource "aws_instance" "app" {
+  ami                         = var.ami_id
+  instance_type               = var.instance_type
+  subnet_id                   = aws_subnet.main.id
+  vpc_security_group_ids      = [aws_security_group.app.id]
+  associate_public_ip_address = true
+  user_data                   = local.user_data
+
+  tags = {
+    Name = "intern-task-app"
+  }
+}
+output "instance_public_ip" {
+  description = "Public IP address of the application EC2 instance"
+  value       = aws_instance.app.public_ip
+}
+
+output "app_port" {
+  description = "Port on which the application is running"
+  value       = local.app_port
 }
