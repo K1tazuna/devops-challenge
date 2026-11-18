@@ -37,3 +37,15 @@ variable "ssh_allowed_cidr" {
     error_message = "Must be a valid IPv4 CIDR block (e.g., 203.0.113.10/32) and cannot be 0.0.0.0/0."
   }
 }
+
+variable "admin_username" {
+  description = "Username for the administrative user created via cloud-init"
+  type        = string
+  default     = "deploy"
+}
+
+variable "ssh_public_key" {
+  description = "SSH public key for accessing"
+  type        = string
+  default     = ""
+}

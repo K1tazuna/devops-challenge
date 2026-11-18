@@ -1,0 +1,14 @@
+#cloud-config
+
+users:
+  - name: ${admin_username}                       
+    shell: /bin/bash
+    lock_passwd: true                
+    sudo: "ALL=(ALL) NOPASSWD:ALL"                     
+    ssh_authorized_keys: ${ssh_authorized_keys}
+
+package_update: true
+packages:
+  - docker.io
+  - ufw
+  - curl         

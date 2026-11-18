@@ -1,7 +1,3 @@
-locals {
-  app_port = tonumber(regex("(?m)^ENV PORT=([0-9]+)", file("${path.module}/../../intern-task-app/Dockerfile"))[0])
-
-}
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -90,4 +86,19 @@ resource "aws_vpc_security_group_egress_rule" "https" {
   ip_protocol       = "tcp"
   from_port         = 443
   to_port           = 443
+}
+
+locals {
+  app_port = tonumber(regex("(?m)^ENV PORT=([0-9]+)", file("${path.module}/../../intern-task-app/Dockerfile"))[0])
+
+  dockerfile_b64 = filebase64("${path.module}/../../intern-task-app/Dockerfile")
+  app_source_b64 = filebase64("${path.module}/../../intern-task-app/app/app.py")
+
+  user_data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
+    admin_username      = var.admin_username
+    ssh_authorized_keys = jsonencode(compact([var.ssh_public_key]))
+    app_port            = local.app_port
+    dockerfile_b64      = local.dockerfile_b64
+    app_source_b64      = local.app_source_b64
+  })
 }
