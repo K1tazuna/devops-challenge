@@ -1,3 +1,7 @@
+locals {
+  app_port = tonumber(regex("(?m)^ENV PORT=([0-9]+)", file("${path.module}/../../intern-task-app/Dockerfile"))[0])
+
+}
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -41,4 +45,49 @@ resource "aws_route_table" "main" {
 resource "aws_route_table_association" "main" {
   subnet_id      = aws_subnet.main.id
   route_table_id = aws_route_table.main.id
+}
+resource "aws_security_group" "app" {
+  name        = "intern-task-app"
+  description = "Security group for intern task application"
+  vpc_id      = aws_vpc.main.id
+
+  tags = {
+    Name = "intern-task-sg"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ssh" {
+  security_group_id = aws_security_group.app.id
+  description       = "SSH from the admin CIDR only"
+  cidr_ipv4         = var.ssh_allowed_cidr
+  ip_protocol       = "tcp"
+  from_port         = 22
+  to_port           = 22
+}
+
+resource "aws_vpc_security_group_ingress_rule" "app" {
+  security_group_id = aws_security_group.app.id
+  description       = "intern-task-app"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = local.app_port
+  to_port           = local.app_port
+}
+
+resource "aws_vpc_security_group_egress_rule" "http" {
+  security_group_id = aws_security_group.app.id
+  description       = "Allow outbound HTTP for apt packages"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
+}
+
+resource "aws_vpc_security_group_egress_rule" "https" {
+  security_group_id = aws_security_group.app.id
+  description       = "Allow outbound HTTPS for Docker Hub and repos"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
 }
