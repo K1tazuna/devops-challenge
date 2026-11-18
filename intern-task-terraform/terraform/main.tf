@@ -1,3 +1,4 @@
+
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -104,6 +105,7 @@ locals {
   })
 }
 resource "aws_instance" "app" {
+  user_data_replace_on_change = false
   ami                         = var.ami_id
   instance_type               = var.instance_type
   subnet_id                   = aws_subnet.main.id
